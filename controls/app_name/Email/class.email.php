@@ -1,19 +1,19 @@
 <?php
 
-class Email_System {
+class email {
 	
-	private $temaplte_dir;
+	private static $temaplte_dir;
 	
-	function __construct() {
+	public function __construct() {
 		global $__path;
 		
-		$this->temaplate_dir = $__path->root() . '/templates/email';
+		self::$temaplate_dir = __path::root() . '/templates/email';
 		
 		return true;
-	}	
+	}
 	
 }
 
-$app->email = new Email_System();
+$app->email = new email();
 
 ?>
