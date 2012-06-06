@@ -117,11 +117,12 @@ class config {
 				
 					$s = empty($_SERVER["HTTPS"]) ? '' : 's';
 					self::$url->root = "http{$s}://" . self::$url->root;
+			
+					if (defined('_APP_URL_') ) {
+						$app_url = _APP_URL_;
+						self::$url->root = empty($app_url) ? self::$url->root : $app_url;
+					}
 					
-					#
-					# Added for testing on local machine, in subfolder
-					self::$url->root .= '/noophp';
-					#
 					
 				#
 				# ####

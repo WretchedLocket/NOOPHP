@@ -337,7 +337,7 @@ class app_extends extends API_app {
 				
 			## if not, show the error template
 			elseif ( !$is_dir && is_file( __path::views() . '/error.php' ) ) :
-				$this->template = 'error';
+				self::$template = 'error';
 				require (__path::views() . '/error.php');
 			endif;
 		}

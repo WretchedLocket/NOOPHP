@@ -4,6 +4,13 @@
 	#
 	# Error Constants
 	#
+		# overrides HTTP_HOST with the url specified.
+		# Comes in handy for local development. 
+		# Doesn't work with database driven app.
+		# Exclude or leave blank if you want to use HTTP_HOST
+		define('_APP_URL_' , 'http://domain.com/subfolder');
+		#
+		
 		define('_APP_CACHE_'            , false);
 		define('_APP_REQUIRE_SESSION_'  , false);
 		define('_APP_NAME_'             , 'app_name');
@@ -35,12 +42,14 @@
 	# ####
 	#
 	# Database Constants
+	# Used to establish a connection to a database.
+	# If you want to establish a connection, but not use a database table for configuration settings, leave _DB_CONFIG_LOOKUP_TABLE_ empty
 	#
 		define('_DB_HOST_'     , 'localhost');
 		define('_DB_NAME_'     , 'noophp');
 		define('_DB_USER_'     , '');
 		define('_DB_PASSWORD_' , '');
-		define('_DB_CONFIG_LOOKUP_TABLE_', 'app_config');
+		define('_DB_CONFIG_LOOKUP_TABLE_', ''); // The included SQL file uses the table 'app_config'
 	#
 	#
 	# ####

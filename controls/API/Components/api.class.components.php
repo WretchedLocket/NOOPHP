@@ -9,7 +9,7 @@ class component {
 		$content   = __req::content();
 		$component = __req::component();
 		
-		if ( empty($content) ) : $content = 'home'; endif;
+		$content = ( empty($content) ) ? 'default' : $content;
 		include_once( __path::views() . '/' . $component . '/' . $content . '.php');
 	}
 	
