@@ -14,7 +14,7 @@ class app extends app_extends {
 	## Returns the Page Title of the page request
 	##
 	## ##
-	function page_title() {
+	static public function page_title() {
 		$page_title = ucwords(config::$app->title);
 		$page_title .= empty(config::$app->meta_title) ? '' : ' | ' . config::$app->meta_title;
 		return $page_title;
@@ -37,7 +37,7 @@ class app extends app_extends {
 	## Echos the Page Title of the page request
 	##
 	## ##
-	public function echo_page_title() {
+	static public function echo_page_title() {
 		
 		$page_title = self::page_title();
 		$page_title .= ( !empty(app::$page_title) ) ? ' | ' . ucwords(app::$page_title) : '';
@@ -62,7 +62,7 @@ class app extends app_extends {
 	## Outputs a static alert message that can be used as a modal, if styled in CSS
 	##
 	## ##
-	public function echo_meta_description() {
+	static public function echo_meta_description() {
 		echo config::$app->meta_description;
 	}
 	## ##
@@ -83,7 +83,7 @@ class app extends app_extends {
 	## Outputs a static alert message that can be used as a modal, if styled in CSS
 	##
 	## ##
-	public function echo_meta_keywords() {
+	static public function echo_meta_keywords() {
 		echo config::$app->meta_keywords;
 	}
 	## ##
@@ -104,7 +104,7 @@ class app extends app_extends {
 	## Outputs a static alert message that can be used as a modal, if styled in CSS
 	##
 	## ##
-	function echo_alert() {
+	static public function echo_alert() {
 		if ( !empty($this->alert_message) ) :
 			echo '<div class="alert-message">';
 			echo $this->alert_message;
@@ -129,17 +129,16 @@ class app extends app_extends {
 	## Outputs Open Graph meta data if Open Graph infor is required
 	##
 	## ##
-	function echo_opengraph() {
-		global $img, $config, $__req, $__url;
+	static public function echo_opengraph() {
 		
 		if ( isset(config::$app->fb_opengraph_id) && !empty(config::$app->fb_opengraph_id) ) {
 			
 			$image_url      = '';
-			$the_url        = $__url->root();
+			$the_url        = url::root();
 			$app_page_title = $this->page_title();
 			$page_title     = $app_page_title;
 			
-			$is_image = ( $__req->component() == 'i' ) ? true : false;
+			$is_image = ( request::component() == 'i' ) ? true : false;
 			
 			if ( @$is_image ) : 		
 				$the_url    .= '/' . $this->urd;
@@ -175,9 +174,8 @@ class app extends app_extends {
 	## Will echo a class="active" for a URL if user is viewing a specific component
 	##
 	## ##
-	function header_link_class($x) {
-		global $app,$__req;
-		if ($x == $__req->component()) :
+	static public function header_link_class($x) {
+		if ($x == request::component()) :
 			echo ' class="active"';
 		endif;
 	}
@@ -199,7 +197,7 @@ class app extends app_extends {
 	## Will 64bit encode an ID and return only [a-bA-b][0-9]
 	##
 	## ##
-	function encode_id($id) {
+	static public function encode_id($id) {
 
 		$id = base64_encode($id);
 		$id = str_replace(
@@ -227,7 +225,7 @@ class app extends app_extends {
 	## Includes the header when needed
 	##
 	## ##
-	function post_values_are_valid() {
+	static public function post_values_are_valid() {
 		
 		$return = true;
 		

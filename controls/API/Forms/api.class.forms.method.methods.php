@@ -10,6 +10,9 @@
 class Forms_Methods {
 	
 	
+	public function __construct() {}
+	
+	
 	/* **********************************************************************
 	* START :::
 	* test to verify a given value, in the specified DB/table is unique

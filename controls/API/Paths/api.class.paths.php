@@ -1,66 +1,66 @@
 <?php
-class __path {
+class path {
 	
 	private static $cfg;
 	
-	function __construct() {
+	public function __construct() {
 		self::$cfg = config::$path;
 		return true;
 	}
 	
 	
-	function absolute() {
+	static public function absolute() {
 		return self::$cfg->absolute;
 	}
 	
 	
-	function ajax() {
+	static public function ajax() {
 		return self::$cfg->ajax;
 	}
 	
 	
-	function app() {
+	static public function app() {
 		return self::$cfg->app;
 	}
 	
 	
-	function assets() {
+	static public function assets() {
 		return self::$cfg->assets;
 	}
 	
 	
-	function controls() {
+	static public function controls() {
 		return self::$cfg->controls;
 	}
 	
 	
-	function modules() {
+	static public function modules() {
 		return self::$cfg->modules;
 	}
 	
 	
-	function root() {
+	static public function root() {
 		return self::$cfg->root;
 	}
 	
 	
-	function views() {
+	static public function views() {
 		return self::$cfg->views;
 	}
 	
 	
-	function component() {
-		self::$req = __req::component();
+	static public function component() {
+		self::$req = request::component();
 		$path = self::$cfg->app . '/Components/' . self::$req->component;
 		return $path;
 	}
 	
 	
-	function legacy_includes() {
+	static public function legacy_includes() {
 		return self::$cfg->root . '/includes/common/pages/';
 	}
 	
 }
 
-$__path = new __path();
+$path = new path();
 ?>

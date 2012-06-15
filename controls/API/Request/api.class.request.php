@@ -1,32 +1,36 @@
 <?php
 
-class __req {
+class request {
 	
 	public static $url = array();
 	public static $uri = array();
 	public static $urd = array();
-	private $query_string = array();
+	public static $app_structure;
+	public static $request;
 	
-	function __construct() {
+	private static $query_string = array();
+	
+	public function __construct() {
 		
-		$this->app_structure = array(
+		self::$app_structure = array(
 			'component',
 			'content',
 			'subcontent',
 			'extendedcontent'
 		);
 		
-		$this->build_request_structure();		
+		self::$request = (object) array();
+		
+		self::build_request_structure();		
 		return true;
 	}
 	
-	function build_request_structure() {
-		global $config, $app;
+	static private function build_request_structure() {
 		
 		if ( count(self::$url) == 0 ) :
 		
 			# create each 
-			foreach ($this->app_structure as $str) :
+			foreach (self::$app_structure as $str) :
 				self::$url[$str]=false;
 			endforeach;
 			
@@ -34,23 +38,23 @@ class __req {
 			
 			if (isset($urd)) :
 			
-				$this->urd = $urd;
-				$vars = $this->urd;
+				self::$urd = $urd;
+				$vars = self::$urd;
 				$vars = explode('/',$vars);
 				
 				$count=0;
 				for ($i=0; $i < count($vars); $i++):
-					if ( isset($this->app_structure[$i]) ) :
-						$str = $this->app_structure[$i];
-						$this->request->$str = $vars[$i];
-						self::$url[$str] = $vars[$i];
+					if ( isset(self::$app_structure[$i]) ) :
+						$str = self::$app_structure[$i];
+						self::$request->$str = $vars[$i];
+						self::$url[$str]     = $vars[$i];
 					endif;
 					
-					$this->uri[$vars[$i]] = $vars[$i];
+					self::$uri[$vars[$i]] = $vars[$i];
 					$mixed = explode(',',$vars[$i]);
 					
 					if ( isset($mixed[1]) ) :
-						$this->uri[$mixed[0]] = $mixed[1];
+						self::$uri[$mixed[0]] = $mixed[1];
 					endif;
 											
 					$count++;
@@ -66,33 +70,33 @@ class __req {
 				$var = $q[0];
 				$val = isset($q[1])?$q[1]:'';
 				
-				$this->query_string[$var]=$val;
+				self::$query_string[$var]=$val;
 			endforeach;
 		
 	}
 	
 	
-	function component() {
+	static public function component() {
 		return self::$url['component'];
 	}
 	
 	
-	function content() {
+	static public function content() {
 		return self::$url['content'];
 	}
 	
 	
-	function subcontent() {
+	static public function subcontent() {
 		return self::$url['subcontent'];
 	}
 	
 	
-	function extendedcontent() {
+	static public function extendedcontent() {
 		return self::$url['extendedcontent'];
 	}
 	
 	
 }
 
-$__req = new __req();
+$request = new request();
 ?>

@@ -1,5 +1,4 @@
 <?php
-define( '_DEBUG_MODE', false );
 /*
 	*	Script Name: Forms
 	*	Author: JJ Jiles
@@ -11,7 +10,7 @@ define( '_DEBUG_MODE', false );
 	*
 */
 
-class Error_Debug {
+class errors {
 	#
 	# a couple of basic settings
 	# 
@@ -29,24 +28,65 @@ class Error_Debug {
 	# Suppressed Error Message
 	#	This is the error message that will be displayed if error reporting is turned off
 	#
-	var $errors = array(
-			'display'     => false,
-			'email_to'    => 'tnybit@jjis.me',
-			'email_from'  => 'tnybit@jjis.me',
-			'style_sheet' => 'assets/css/error-reports.css',
-			'suppressed_error_message' => '<div align="center"><b style="font-size: 150%;">an error has occurred and email has been sent the administrator</b></div>'
-		);
 	
-	var $error_chunk = "";
-	var $error_js    = "";
-	var $header_echo = false;
-	var $footer_echo = false;
+	public static $error_chunk = '';
+	public static $error_chunk_header = '';
+	public static $error_chunk_footer = '';
+	public static $error_js    = '';
+	public static $header_echo = false;
+	public static $footer_echo = false;
+	public static $display;
 			
 
 	
-	function Error_Debug() {
+	public function __construct() {		
+		#
+		# check to see if the $config object exists. if so, use it's setting
+		self::$display = (defined(_ERRORS_DISPLAY_)) ? _ERRORS_DISPLAY_ : false;
+        register_shutdown_function(array($this, 'catch_error'));
 		
-		$this->error_js = "\n
+		return true;
+		
+	}
+	
+	
+	function debug_header() {
+		if ( !self::$header_echo ) {
+			//echo self::echo_css();
+			//self::js_script();
+			self::debug_layout();
+			//echo "<div id=\"error-container\"><h1>An error has been caught</h1><div id=\"error-wrapper\">";
+			//echo "<ul id=\"error-list\">";
+			self::$header_echo = true;
+		}
+	}
+	
+	
+	function debug_layout() {
+			ob_start();
+				$debug_file = dirname(__FILE__) . '/debug_layout.php';
+				include($debug_file);
+				$debug_file_contents = ob_get_contents();
+			ob_end_clean();
+			
+			$content = str_replace('%%_DEBUG_OUTPUT_%%', self::$error_chunk, $debug_file_contents);
+			
+			echo $content;
+	}
+			
+	
+	
+	function debug() {
+		if (!empty(self::$error_chunk)) {
+			self::debug_header();	
+			//echo self::$error_chunk;
+			//self::debug_footer();
+		}
+	}
+	
+	
+	function js_script() {
+		echo "\n
 			<script src=\"http://ajax.googleapis.com/ajax/libs/jquery/1.6.1/jquery.min.js\" type=\"text/javascript\"></script>\n
 			<script type='text/javascript'>
 				window.onload = function() {
@@ -114,36 +154,15 @@ class Error_Debug {
 				}
 			</script>\n
 		";
-			
-		return true; 
 	}
 	
-	
-	function debug_header() {
-		if ( !$this->header_echo ) :	
-			echo $this->echo_css();
-			echo $this->error_js;
-			echo "<div id=\"error-container\"><h1>An error has been caught</h1><div id=\"error-wrapper\">";
-			//echo "<ul id=\"error-list\">";
-			$this->header_echo = true;
-		endif;
-	}
-			
-	
-	
-	function debug() {
-			
-		if (!empty($this->error_chunk)) :
-			echo $this->error_chunk;
-		endif;
-	}
 	
 	function debug_footer() {
-		if ( !$this->footer_echo ) :
+		if ( !self::$footer_echo ) {
 			echo "</ul>";
 			echo "<p id=\"error-close\"><a href=\"#\">close</a></p></div></div>";
-			$this->footer_echo = true;
-		endif;
+			self::$footer_echo = true;
+		}
 	}
 
 
@@ -169,66 +188,27 @@ class Error_Debug {
 	*		If display errors is false, suppress the error
 	*		and email the error
 	*********************************************************************** */
-	function catch_error($n='', $s='', $f='', $l='') {
-		global $security, $config;	
-		
-		#
-		# check to see if the $config object exists. if so, use it's setting
-		$this->errors['display'] = (isset($config->errors['display']) ) ? $config->errors['display'] : $this->errors['display'];
-		
-		#
-		# if this is a parse error, we need to handle it differently
-		# because it completely stops all PHP parsing, we catch it immediately
-		# and display a simple output
-		/*if( empty($n) && false === is_null($aError = error_get_last()) ) :
-		
-			#
-			# suppress the error and show something entertaining
-			if ( !$this->errors['display'] && !defined( '_DEBUG_MODE' ) || (defined( '_DEBUG_MODE' ) && _DEBUG_MODE === false)  ) :
-				echo $this->errors['suppressed_error_message'];
-				$this->error_thrown($n, $s, $f, $l); 
-			
-			#
-			# for debugging, display the information about the error
-			elseif ( @$this->errors['display'] || (defined( '_DEBUG_MODE' ) && _DEBUG_MODE === true) ) :				
-				$this->error_backtrace($n, $s, $f, $l);
-				$this->debug();
-			endif;
-		
-		#
-		# exception errors get sent to either backtracing or suppression
-		else :
-		*/
+	static public function catch_error($n='', $s='', $f='', $l='') {
 			#
 			# backtrace the error and display the information for debugging
-			if ( @$this->errors['display'] ) : 
-				$this->error_backtrace($n, $s, $f, $l);
-				
-				//$this->error_thrown($n, $s, $f, $l); 
-				
-				///if ( defined( '_DEBUG_MODE' ) && _DEBUG_MODE === true) :
-					//$this->debug();
-				//else :
-					$this->debug_header();	
-					$this->debug();
-				//endif;
+			$debug_mode = _DEBUG_MODE_;
+			if ( @$debug_mode ) { 
+				self::error_backtrace($n, $s, $f, $l);
+				self::debug();
 			
 			#
 			# suppress the error and email it
-			else : 
+			} else {
 			
-				if ( !headers_sent() ) :
+				if ( !headers_sent() ) {
 					header("HTTP/1.1 400 Bad Request");
-				endif;
+				}
 				
-				$this->error_thrown($n, $s, $f, $l); 
+				self::error_thrown($n, $s, $f, $l); 
 			
-			endif;
+			}
 			
 			return true;
-			
-		//endif;
-		//exit();
 	} 
 	/* ***********************************************************************
 	* END :::
@@ -250,8 +230,7 @@ class Error_Debug {
 	*	It's pretty simple. Not a lot that needs explaining
 	*
 	*********************************************************************** */
-	function error_backtrace($errno, $errstr, $error_file, $error_line) {
-		global $css, $app;
+	static private function error_backtrace($errno, $errstr, $error_file, $error_line) {
 		
 		
 		$errorsThrown = debug_backtrace();
@@ -261,14 +240,14 @@ class Error_Debug {
 		# they are the initial calls from error catching
 		# we can ignore them
 		#
-		if ( isset($errorsThrown[0]) ) :
+		if ( isset($errorsThrown[0]) ) {
 			$errorThrown  = $errorsThrown[0]['args'];
 			
-			if ( !empty($errorThrown[1]) ) :
+			if ( !empty($errorThrown[1]) ) {
 				
 				#
 				# this is the primary error that started it all
-				$this->error_chunk .=  "<div class=\"error-error-item\">"
+				self::$error_chunk .=  "<div class=\"error-error-item\">"
 								. "<b class=\"error-error-view\">+</b>"
 								. "<b class=\"error-error-header\">".$errorThrown[1]."</b>"
 								. "<div class=\"error-error-details\">"
@@ -277,16 +256,16 @@ class Error_Debug {
 								. "<tr><td class=\"left\"><strong>Line: </strong></td><td>" . $errorThrown[3] . "</td></tr>\n"
 								. "<tr><td class=\"left\"><strong>File: </strong></td><td>" . $errorThrown[2] . "</td></tr>\n</table>\n";
 				
-			endif; 
+			} 
 			
 			#
 			# for additional debugging, loop through all previous function calls
 			# this assists in debugging if you call a method multiple times
 			# now we can figure out which instance caused the error
 			#
-			$this->error_chunk_header .= "<p>All previously executed functions: </p>\n";
+			self::$error_chunk_header .= "<p>All previously executed functions: </p>\n";
 			
-			$this->error_chunk_header .= "<table id=\"previous-errors\" cellpadding=5 cellspacing=0 border=0 style=\"border: 1px solid #333;\">"
+			self::$error_chunk_header .= "<table id=\"previous-errors\" cellpadding=5 cellspacing=0 border=0 style=\"border: 1px solid #333;\">"
 							. "<tr style=\"background: #d3d3d3;\">"
 							. "<th>order</th>"
 							. "<th>function name</th>"
@@ -297,36 +276,32 @@ class Error_Debug {
 			#
 			# loop thu the backtrace and output
 			
-			if (!empty($this->error_chunk)) :
+			if (!empty(self::$error_chunk)) {
 			
 				$count = 0;
 				array_reverse($errorsThrown);
 				
-				foreach ($errorsThrown as $error) :
-					if ($count > 1 && !empty($error['args'][1]) ) :
-						if ($count == 1) :
-							$this->error_chunk .= $this->error_chunk_header;
-						endif;
-						$this->error_chunk .= '<tr>'
+				foreach ($errorsThrown as $error) {
+					if ($count > 1 && !empty($error['args'][1]) ) {
+						self::$error_chunk .= ($count == 1) ? self::$error_chunk_header : '';
+						self::$error_chunk .= '<tr>'
 							. '<td>' . ($count-1) . '</td>'
 							. '<td>' . $error['args'][1] . '()</td>'
 							. '<td>' . $error['args'][2] . '</td>'
 							. '<td>' . $error['args'][3] . '</td>'
 							. '</tr>';
-					endif;
+					}
 					$count++;
 	
-				endforeach;
+				}
 				
 				#
 				# close it all up
-				$this->error_chunk .= '</table></div></div>';
-				
-			endif;
+				self::$error_chunk .= '</table></div></div>';
 				
 		
-		elseif ( true == ($err = error_get_last()) ) :
-				$this->error_chunk = "<li class=\"error-error-item\">"
+			} elseif ( true == ($err = error_get_last()) ) {
+				self::$error_chunk = "<li class=\"error-error-item\">"
 								. "<b class=\"error-error-view\">+</b>"
 								. "<b class=\"error-error-header\">".$err['message']."</b>"
 								. "<div class=\"error-error-details\">"
@@ -335,7 +310,10 @@ class Error_Debug {
 								. "<tr><td class=\"left\"><strong>Message: </strong></td><td>" . $err['message'] . "</td></tr>\n"
 								. "<tr><td class=\"left\"><strong>File: </strong></td><td>" . $err['file'] . "</td></tr>\n"
 								. "<tr><td class=\"left\"><strong>On line: </strong></td><td>".$err['line']."</td></tr>\n</table></div></li>\n";
-		endif;
+			}
+		}
+		
+		return self::$error_chunk;
 	}
 	/* ***********************************************************************
 	* END :::
@@ -368,7 +346,7 @@ class Error_Debug {
 		# they are the initial calls from error catching
 		# we can ignore them
 		#		
-		if (isset($errorThrown[2])) :
+		if (isset($errorThrown[2])) {
 			$errorThrown = $errorThrown[2];
 			$errorFunction = "\n".'Calling Function: '.$errorThrown['function'];
 		
@@ -388,9 +366,8 @@ class Error_Debug {
 					. "URL: " . $_SERVER['REQUEST_URI'] . "\n"
 					. "Referer: {$referer}";
 					
-					
 			
-			if ( isset($errorsThrown[2]) ) :
+			if ( isset($errorsThrown[2]) ) {
 				$errorThrown  = $errorsThrown[2];
 				
 				$count = 0;
@@ -398,40 +375,61 @@ class Error_Debug {
 				
 				#
 				# loop thu the backtrace and output
-				foreach ($errorsThrown as $error) :
-					if ($count > 1) :
+				foreach ($errorsThrown as $error) {
+					if ($count > 1) {
 						$message .= "\n\n".'--------------------------------------------------------------------------'
 								. 'Function: '  . $error['function'] . "\n"
 								. 'File Name: ' . $error['file']     . "\n"
 								. 'On Line: '   . $error['line']     . "\n";
-					endif;
-					$count++;
-	
-				endforeach;
-			endif;
+					}
+					$count++;	
+				}
+			}
 			
-			$message .= "\n\n\n"
-					. "Server Output:\n"
-					. $server_r
-					. "\n\n\n";
-					
-			if ( !error_log(
-				$message, 1, 
-				$this->errors['email_to'],
-				"From: " . $this->errors['email_from']
-				)
-			) :
-				
-				echo $this->errors['suppressed_error_message'];
-				
-			endif;
-		endif;
+			$message .= "\n\n\nServer Output:\n" . $server_r . "\n\n\n";
+			
+			//if ( !error_log( $message, 1, _ERRORS_EMAIL_TO_, "From: " . _ERRORS_EMAIL_FROM_ ) ) {
+				echo _ERRORS_ERROR_MESSAGE_;
+			//}
+		}
 	}
 	/* ***********************************************************************
 	* END :::
 	*********************************************************************** */
 
 
+	 
+	 
+	 function make_full_url() {	
+		if ( isset($_SERVER['SCRIPT_NAME']) ) {
+			$sub_dir = trim($_SERVER['SCRIPT_NAME'], '/');
+			$sub_dir_array = explode('/',$sub_dir);
+			$dir_count     = count($sub_dir_array)-1;
+			$dir = '';
+			for ( $i=0; $i < $dir_count; $i++ ) {
+				$dir .= '/' . $sub_dir_array[$i];
+			}
+		}
+	
+		if ( isset($_SERVER['HTTP_HOST']) ) {
+			$domain = $_SERVER['HTTP_HOST'];
+			$url    = $domain . $dir;
+			
+		} else if ( isset($_SERVER['SERVER_NAME']) ) {
+			self::$app->domain = $_SERVER['SERVER_NAME'];
+			$domain = $_SERVER['SERVER_NAME'];
+			$url    = $domain . $dir;
+		}
+	
+		$s = empty($_SERVER["HTTPS"]) ? '' : 's';
+		$url = "http{$s}://" . $url;
+
+		if (defined('_APP_URL_') ) {
+			$app_url = _APP_URL_;
+			$url = empty($app_url) ? $url : $app_url;
+		}
+		return $url;
+	 }
 	
 	
 	
@@ -447,49 +445,22 @@ class Error_Debug {
 	*
 	*********************************************************************** */
 	function echo_css() {
-		global $config;
-		
-		$root_url  = $_SERVER['HTTP_HOST'];		
-		$s = empty($_SERVER["HTTPS"]) ? '' : 's';
-		$root_url  = "http{$s}://".$root_url;
-		
-		$sub_dir = dirname(dirname(dirname(__FILE__)));
-		
-		$sub_dir = str_replace('\\','/',$sub_dir);
-		$sub_dir = explode('/',$sub_dir);
-		
-		$root_url .= '/' . array_pop($sub_dir);
-		
-		
-		$css_url = $root_url . '/' . $this->errors['style_sheet'];
-		
-		if ( isset($config->url->root) ) :
-			$css_url = $config->url->root . '/' . $this->errors['style_sheet'];
-		endif;
-
-		
-		$css_link = '<link rel="stylesheet" id="mainstyle" type="text/css" href="' . $css_url . '" />';
+		$css_link = '<link rel="stylesheet" id="mainstyle" type="text/css" href="' . self::make_full_url() . '/assets/css/error-reports.css" />';
 		return $css_link;
+		
 	}
 	/* ***********************************************************************
 	* END :::
 	*********************************************************************** */
 
 }
-		//if ( $config->errors['display'] == false ) :
-			
 		# Upon All Errors, call the error handling function
-		//	set_error_handler(array(new Error_Debug(),'catch_error'),E_ALL);
+			set_error_handler('errors::catch_error',E_ALL);
 		
 		# Register function to execute at the end of the script
-			//register_shutdown_function(array(new Error_Debug(),'catch_error'));
-		
+			//register_shutdown_function('errors::catch_error');
+			$errors = new errors();
 		# Hide error messages
-		//	error_reporting(E_ALL);
-		//	ini_set('display_errors', 0);
-		
-		//endif;
-
-
-
+			error_reporting(E_ALL);
+			ini_set('display_errors', 1);
 ?>

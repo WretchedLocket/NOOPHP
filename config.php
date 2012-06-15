@@ -8,7 +8,8 @@
 		# Comes in handy for local development. 
 		# Doesn't work with database driven app.
 		# Exclude or leave blank if you want to use HTTP_HOST
-		define('_APP_URL_' , 'http://domain.com/subfolder');
+		# It should automatically build the URL, correctly, if you're under a sub-folder for testing
+		define('_APP_URL_' , '');
 		#
 		
 		define('_APP_CACHE_'            , false);
@@ -49,7 +50,7 @@
 		define('_DB_NAME_'     , 'noophp');
 		define('_DB_USER_'     , '');
 		define('_DB_PASSWORD_' , '');
-		define('_DB_CONFIG_LOOKUP_TABLE_', ''); // The included SQL file uses the table 'app_config'
+		define('_DB_CONFIG_LOOKUP_TABLE_', 'app_config'); // The included SQL file uses the table 'app_config'
 	#
 	#
 	# ####
@@ -98,8 +99,10 @@
 	#
 	# Error Constants
 	#          
+		define( '_DEBUG_MODE_', true );
+		
 		// true/false
-		define('_ERRORS_DISPLAY_',true);  
+		define('_ERRORS_DISPLAY_',false);  
 		
 		// url to redirect user to when there is an error
 		define('_ERRORS_REDIRECT_TO_URL_','/error');    
@@ -139,7 +142,7 @@
 		define( '_STRING_LOGIN_ERROR__NOT_VERIFIED_'     , '');
 		define( '_STRING_LOGIN_ERROR__ACCOUNT_DISABLED_' , '');
 		define( '_STRING_LOGIN_ERROR__LOCKED_OUT_'       , '');
-		define( '_STRING_LOGIN_ERROR__INVALID_'          , '');
+		define( '_STRING_LOGIN_ERROR__INVALID_'          , 'User ID and/or Password is incorrect. Please try again.');
 		define( '_STRING_LOGIN_SUCCESS_'                 , '');
 		
 		# ###### #

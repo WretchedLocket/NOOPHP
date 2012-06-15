@@ -3,7 +3,6 @@
 * END :::
 *********************************************************** */	
 defined( '_VALID_REFERENCE' ) or die( 'Direct Access to this location is not allowed.' );
-include_once(dirname(dirname(dirname(dirname(__FILE__)))) . '/config.php');
 
 class config {
 	
@@ -101,31 +100,11 @@ class config {
 			# and versioning.
 			# If set, this will be used to select the config
 			# settings from the database tabel server_settings
-			
-				# ###
-				# Use if you are testing in a sub-folder or local machine
-				#	self::$url->root = 'http://domain.com/subdfolder';
-				#		
-					if ( isset($_SERVER['HTTP_HOST']) ) {
-						self::$app->domain = $_SERVER['HTTP_HOST'];
-						self::$url->root   = self::$app->domain;
-						
-					} else if ( isset($_SERVER['SERVER_NAME']) ) {
-						self::$app->domain = $_SERVER['SERVER_NAME'];
-						self::$url->root   = self::$app->domain;
-					}
-				
-					$s = empty($_SERVER["HTTPS"]) ? '' : 's';
-					self::$url->root = "http{$s}://" . self::$url->root;
-			
-					if (defined('_APP_URL_') ) {
-						$app_url = _APP_URL_;
-						self::$url->root = empty($app_url) ? self::$url->root : $app_url;
-					}
-					
-					
-				#
-				# ####
+
+			self::make_full_url();
+							
+			#
+			# ####
 				
 		
 		# ####
@@ -241,29 +220,18 @@ class config {
 	 * START :::
 	 *   Builds the $config object for the domain
 	 ***************************************************** */
-	function with_database($connectOnly=false) {
+	function with_database() {
 		
 		if ( isset(self::$db) && (!empty(self::$db->db_name) && !empty(self::$db->config_lookup_table)) ) {
 			
-			if ( !$connectOnly ) {
+				#
+				# Connect to the database
 				db::connect();
 				
-				$config_lookup_table = self::$db->db_name.'.'.self::$db->config_lookup_table;
+				$config_lookup_table = self::$db->db_name . '.' . self::$db->config_lookup_table;
 				
-					
-				if ( !isset(self::$url->root) || empty(self::$url->root) ) {		
-					if ( isset($_SERVER['HTTP_HOST']) ) {
-						self::$app->domain = $_SERVER['HTTP_HOST'];
-						self::$url->root   = self::$app->domain;
-						
-					} else if ( isset($_SERVER['SERVER_NAME']) ) {
-						self::$app->domain = $_SERVER['SERVER_NAME'];
-						self::$url->root   = self::$app->domain;
-					}
-				}
-		
-				$s = empty($_SERVER["HTTPS"]) ? '' : 's';
-				self::$url->root = "http{$s}://" . self::$url->root;
+
+				self::make_full_url();
 	
 	
 				if ( isset(self::$app->name) && !empty(self::$app->name)) {
@@ -271,7 +239,7 @@ class config {
 					$sql = db::query($sql);
 				
 				} else {
-					$sql = "SELECT * FROM {$config_lookup_table} WHERE domain = '" . self::$app->domain . "'";
+					$sql = "SELECT * FROM {$config_lookup_table} WHERE app_domain = '" . self::$app->domain . "'";
 					$sql = db::query($sql);
 					
 				}
@@ -374,12 +342,41 @@ class config {
 					self::$url->admin   = self::$url->root    . $row->url_admin;
 					
 				}
-			}
 		}
 	}
 	/* *****************************************************
 	 * END :::
 	 ***************************************************** */
+	 
+	 
+	 function make_full_url() {	
+		if ( isset($_SERVER['SCRIPT_NAME']) ) {
+			$sub_dir = trim($_SERVER['SCRIPT_NAME'], '/');
+			$sub_dir_array = explode('/',$sub_dir);
+			$dir_count     = count($sub_dir_array)-1;
+			$dir = '';
+			for ( $i=0; $i < $dir_count; $i++ ) {
+				$dir .= '/' . $sub_dir_array[$i];
+			}
+		}
+	
+		if ( isset($_SERVER['HTTP_HOST']) ) {
+			self::$app->domain = $_SERVER['HTTP_HOST'];
+			self::$url->root   = self::$app->domain . $dir;
+			
+		} else if ( isset($_SERVER['SERVER_NAME']) ) {
+			self::$app->domain = $_SERVER['SERVER_NAME'];
+			self::$url->root   = self::$app->domain . $dir;
+		}
+	
+		$s = empty($_SERVER["HTTPS"]) ? '' : 's';
+		self::$url->root = "http{$s}://" . self::$url->root;
+
+		if (defined('_APP_URL_') ) {
+			$app_url = _APP_URL_;
+			self::$url->root = empty($app_url) ? self::$url->root : $app_url;
+		}
+	 }
 	 
 	 
 	 

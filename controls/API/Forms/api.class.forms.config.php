@@ -3,17 +3,17 @@
 	// specify what required/excluded element names will start with
 	// EX: required: <input type="type" name="incl_fieldName" id="fieldName" value="" />
 	// EX: excluded: <input type="type" name="_ex_fieldName" id="fieldName" value="" />
-	$this->required_indicator = 'incl_';
-	$this->excluded_indicator = '_ex_';
+	self::$required_indicator = 'incl_';
+	self::$excluded_indicator = '_ex_';
 	
 	//
 	// this is a common template used to build an auto-response email
 	// use the full absolute path to the template
-	$this->email_template = '';
+	self::$email_template = '';
 	
 	// default classes
 	// used unless specified during method call
-	$this->classes = array(
+	self::$classes = array(
 		'text'     => 'input',
 		'password' => 'password',
 		'hidden'   => 'input',
@@ -29,7 +29,7 @@
 	);
 	
 	// list of attributes you do not want to have added to an element
-	$this->attributes_not_allowed = array(
+	self::$attributes_not_allowed = array(
 		'type',
 		'default',
 		'checked',
@@ -40,12 +40,12 @@
 	);
 	
 	// reserved items specifically for the db calls.
-	$this->reserved = array(
+	self::$reserved = array(
 		#
 		# indicate, in an array, what you want to strip from a post name
 		# when the post name is displayed to user during times such as
 		# errors and/or emails. the replace_what and replace_with must be in the same order
-		'replace_what'			=> array( $this->required_indicator, '_', '-' ),  // the excluded/included indicators are automatically added to this list
+		'replace_what'			=> array( self::$required_indicator, '_', '-' ),  // the excluded/included indicators are automatically added to this list
 		'replace_with'			=> array( '', '', '', ' ', ' '),
 		
 		#
@@ -63,5 +63,5 @@
 		# you want to have automatically included in the "insert" statement
 		'customFormIndicator'	=> 'custom_form'
 	);
-	$this->value_exclude = false;
+	self::$value_exclude = false;
 ?>

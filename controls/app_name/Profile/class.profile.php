@@ -19,8 +19,7 @@ class Session_Profile {
 	# returns a url to the profile page of the user
 	# determines what account type they are and builds URL accordingly
 	function profile_page() {
-		global $__url;
-		return $__url->root() . '/' . $this->account_type_long() . '/profile';
+		return url::root() . '/' . self::account_type_long() . '/profile';
 	}
 	# #### #
 	
@@ -31,14 +30,13 @@ class Session_Profile {
 	
 	
 	function not_viewing_profile() {
-		global $app, $__url;
 		
 		parse_str($_SERVER['QUERY_STRING']);
 		
-		$url = $__url->root();
+		$url = url::root();
 		$url .= isset($urd) ? '/'.$urd : '';
 		
-		if ( $url != $this->profile_page() ) :
+		if ( $url != self::profile_page() ) :
 			return true;
 		endif;
 		

@@ -1,11 +1,11 @@
 <?php
-include_once( __path::app() . '/Profile/class.profile.php');
-include_once( __path::app() . '/Cookies/class.cookie.php');
-include_once( __path::app() . '/Session/class.session.php');
+include_once( path::app() . '/Profile/class.profile.php');
+include_once( path::app() . '/Cookies/class.cookie.php');
+include_once( path::app() . '/Session/class.session.php');
 
 class app_extends extends API_app {	
 	
-	var $images;
+	public $images;
 	private $request;
 	public $urd;
 	public $uri;
@@ -27,16 +27,16 @@ class app_extends extends API_app {
 			
 			config::$cookie->lifespan = 3600*24*365;
 			
-			if ( __req::component() == 'renew-session') :
+			if ( request::component() == 'renew-session') :
 				session::rebuild_session_variables();
 			endif;
 			
 			
-			if ( session::is_logged_in() && __req::component() == 'sign-in' ) {
-				header('Location: ' . __url::dashboard());
+			if ( session::is_logged_in() && request::component() == 'sign-in' ) {
+				header('Location: ' . url::dashboard());
 			
-			} else if ( !session::is_logged_in() && @__page::session_required() && !session::is_logging_in() ) {
-				header('Location:' . __url::login() . "/referer," . $_SERVER['REQUEST_URI'] );
+			} else if ( !session::is_logged_in() && @page::session_required() && !session::is_logging_in() ) {
+				header('Location:' . url::login() . "/referer," . trim(request::$urd, '/') );
 				exit();
 			}
 			
@@ -48,7 +48,7 @@ class app_extends extends API_app {
 			#### #
 			if ( form::has_post() ) :
 				form::validate();
-				if ( isset(form::$posts->incl_email) && !session::is_registering() ) :
+				if ( isset(form::$posts->incl_email) && !session::is_registering() && session::is_logging_in() ) :
 					session::try_login();
 				
 				elseif ( @session::is_registering() ) :
@@ -66,7 +66,7 @@ class app_extends extends API_app {
 				# the content() method will handle the rest
 			
 			
-			self::$template = ( @self::is_home() ) ? self::$default_template : strtolower(__req::component());
+			self::$template = ( @self::is_home() ) ? self::$default_template : strtolower(request::component());
 			return true;
 		}
 	## ##
@@ -87,10 +87,10 @@ class app_extends extends API_app {
 	## determines if the user is at the Home Page
 	##
 	## ##	
-		public function is_home() {
+		static public function is_home() {
 			
-			$component    = __req::component();
-			$home_template     = self::$default_template;
+			$component     = request::component();
+			$home_template = self::$default_template;
 			
 			$has_component = ( !empty($component) ) ? true : false;
 			
@@ -117,7 +117,7 @@ class app_extends extends API_app {
 	##
 	## ##	
 		public function is_viewing_image() {
-			$component = __req::component();
+			$component = request::component();
 			$comp = (bool) ( $component == 'i' );
 			return $comp;
 		}
@@ -141,7 +141,7 @@ class app_extends extends API_app {
 	## ##
 		public function home_link() {
 			if ( !$this->is_home() ) :
-				echo '<li><a href="' . __url::root() . '">home</a></li>';
+				echo '<li><a href="' . url::root() . '">home</a></li>';
 			endif;
 		}
 	## ##
@@ -162,7 +162,7 @@ class app_extends extends API_app {
 	## Includes the header when needed
 	##
 	## ##
-	public function header($vars=array()) {
+	static public function header($vars=array()) {
 		
 		
 		if ( !self::$header_called ) {
@@ -201,8 +201,8 @@ class app_extends extends API_app {
 				
 				} else {
 					
-					$content   = __req::content();
-					$component = __req::component();
+					$content   = request::content();
+					$component = request::component();
 					
 					$page_title  = $component . ' ' . $content;
 					$page_title  = str_replace('-',' ', $page_title);
@@ -218,7 +218,7 @@ class app_extends extends API_app {
 			## Page Title
 			
 			cache::start();
-			include( __path::modules() . '/header.php' );
+			include( path::modules() . '/header.php' );
 		}
 	}
 	## ##
@@ -239,12 +239,13 @@ class app_extends extends API_app {
 	## Includes the header when needed
 	##
 	## ##
-	public function footer() {
+	static public function footer() {
 		if ( !self::$footer_called ) {
 			self::$footer_called = true;
-			include( __path::modules() . '/footer.php' );
+			include( path::modules() . '/footer.php' );
 			cache::close();
 		}
+		return false;
 	}
 	## ##
 	##
@@ -254,15 +255,15 @@ class app_extends extends API_app {
 	
 	
 	
-	public function section_content() {
+	static public function section_content() {
 		
-		$section_file = __path::views() . '/section-headers/' . $this->template . '.php';
-		$common_file  = __path::views() . '/section-headers/common.php';
+		$section_file = path::views() . '/section-headers/' . $this->template . '.php';
+		$common_file  = path::views() . '/section-headers/common.php';
 		
 		if ( is_file($section_file) ) :
 			include_once( $section_file );
 		else :
-			if (  __req::component() != 'administrator' ) :
+			if (  request::component() != 'administrator' ) :
 				include_once( $common_file );
 			endif;
 		endif;
@@ -271,24 +272,24 @@ class app_extends extends API_app {
 	
 	
 	
-	public function css() {
+	static public function css() {
 		
-		$css_file = __path::assets() . '/css/components/' . self::$template . '.css';
+		$css_file = path::assets() . '/css/components/' . self::$template . '.css';
 		
 		if ( is_file($css_file) ) :
-			echo '<link rel="stylesheet" href="' . __url::assets() . '/css/components/' . self::$template . '.css" type="text/css" />';
+			echo '<link rel="stylesheet" href="' . url::assets() . '/css/components/' . self::$template . '.css" type="text/css" />';
 		endif;
 		
 	}
 	
 	
 	
-	public function js() {
+	static public function js() {
 		
-		$js_file = __path::assets() . '/js/components/functions.' . __req::component() . '.js';
+		$js_file = path::assets() . '/js/components/functions.' . request::component() . '.js';
 		
 		if ( is_file($js_file) ) :
-			echo '<script type="text/javascript" src="' . __url::assets() . '/js/components/functions.' . __req::component() . '.js?v=1.1" type="text/javascript"></script>';
+			echo '<script type="text/javascript" src="' . url::assets() . '/js/components/functions.' . request::component() . '.js?v=1.1" type="text/javascript"></script>';
 		endif;
 		
 	}
@@ -303,27 +304,27 @@ class app_extends extends API_app {
 	## If not, this is an invalid page request, so the error template
 	##
 	## ##
-		public function the_content() {
+		static public function the_content() {
 			
 			## the full path the view folder and template
-			$component = __req::component();
+			$component = request::component();
 			
 			if ( empty($component)) {
 				$component = 'content';
 			}
-			$dir  = __path::views() . '/' . $component;
-			$cont = __req::content();
+			$dir  = path::views() . '/' . $component;
+			$cont = request::content();
 			
 			$is_dir = is_dir($dir); 
 			
 			if ( !$is_dir ) :
-				$dir = __path::views() . '/content';
+				$dir = path::views() . '/content';
 			endif;
 			
 			$file = $dir . '/' . self::$template;
 			
 			## the full path the Functions file for this template
-			$functions_file = __path::app() . '/Components/' . self::$template . '/functions.' . self::$template . '.php';
+			$functions_file = path::app() . '/Components/' . self::$template . '/functions.' . self::$template . '.php';
 			
 			## does the Functions file exist? 
 			## if so, include it
@@ -336,9 +337,9 @@ class app_extends extends API_app {
 				require ( $file . '.php' );
 				
 			## if not, show the error template
-			elseif ( !$is_dir && is_file( __path::views() . '/error.php' ) ) :
+			elseif ( !$is_dir && is_file( path::views() . '/error.php' ) ) :
 				self::$template = 'error';
-				require (__path::views() . '/error.php');
+				require (path::views() . '/error.php');
 			endif;
 		}
 	## ##
@@ -361,7 +362,7 @@ class app_extends extends API_app {
 			
 			
 			## the full path the Functions file for this template
-			$functions_file = __path::component() . '/functions.' . self::$template . '.php';
+			$functions_file = path::component() . '/functions.' . self::$template . '.php';
 			
 			## does the Functions file exist? 
 			## if so, include it
@@ -378,10 +379,10 @@ class app_extends extends API_app {
 
 #
 # $app extensions
-	include_once( __path::app() . '/Application/class.app.extension.php');
-	include_once( __path::app() . '/Uploads/class.uploads.php');
-	include_once( __path::app() . '/Email/class.email.php');
-	include_once( __path::app() . '/Pagination/class.pagination.php');
+	include_once( path::app() . '/Application/class.app.extension.php');
+	include_once( path::app() . '/Uploads/class.uploads.php');
+	include_once( path::app() . '/Email/class.email.php');
+	include_once( path::app() . '/Pagination/class.pagination.php');
 
 
 ?>

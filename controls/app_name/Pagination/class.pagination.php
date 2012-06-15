@@ -14,7 +14,6 @@ class Pagination_Module {
 	
 	
 	function init( $vars=false ) {
-		global $app, $__url;
 		
 		if ( is_array($vars) ) :
 			foreach ( $vars as $key=>$val ) :
@@ -27,7 +26,7 @@ class Pagination_Module {
 		$this->pages = ceil($this->pages);
 	
 		# build the url for the page numbers
-		$this->page_url    = $__url->component().'/dashboard/'.$this->page_tab;
+		$this->page_url    = url::component().'/dashboard/'.$this->page_tab;
 		$this->page_anchor = '#!/' . $this->page_tab;
 		
 		# the URI has a page number

@@ -30,17 +30,17 @@ class session {
 			unset($_SESSION['profile']->password);
 		endif;
 		
-		__page::get_details();
+		page::get_details();
 		
-		if ( __req::component() == 'sign-out' ) :
+		if ( request::component() == 'sign-out' ) :
 			self::logout();
 		
 		else :		
 		
-			if ( @__page::session_required() ) :
+			if ( @page::session_required() ) :
 			
 				if ( !self::is_logging_in() && !self::is_logged_in() && !self::is_logging_out() && @self::$login_required ) :
-					header("Location: " . self::login_page() . "/referer," . __req::$urd );
+					header("Location: " . self::login_page() . "/referer," . trim(request::$urd, '/') );
 					exit();
 				endif;
 				
@@ -71,7 +71,7 @@ class session {
 	
 	
 	
-	function id() {
+	static public function id() {
 		$id = isset($_SESSION['profile']->id) ? $_SESSION['profile']->id : false;
 		return $id;
 	}
@@ -86,7 +86,7 @@ class session {
 	## ##	
 	
 		## is the user logged in?
-		function is_logged_in() {
+		static public function is_logged_in() {
 			
 			$logged_in = (bool) ( isset($_COOKIE[config::$cookie->session]) || isset($_COOKIE[config::$cookie->remember]) );
 			$logged_in = (bool) ( isset($_SESSION['profile']->id) && !empty($_SESSION['profile']->id) );
@@ -94,22 +94,23 @@ class session {
 		}
 		
 		## is the user logging in?
-		function is_logging_in() {
+		static public function is_logging_in() {
 			
-			$component = __req::component();
+			$component = request::component();
 			$component = !empty($component) ? strtolower($component) : 'home';			
-			$comp      = (bool) ( $component == 'login' );			
+			$comp      = (bool) ( $component == 'login' || $component == 'sign-in' );			
 			return $comp;
+			
 		}
 		
-		function login_page() { 
-			return $__url->login();
+		static public function login_page() { 
+			return url::login();
 		}
 		
 		#
 		# Are they trying to register a new account		
-		function is_registering() {
-			return (bool) (__req::component() == 'register');
+		static public function is_registering() {
+			return (bool) (request::component() == 'register');
 		}
 	## ##
 	##
@@ -131,9 +132,9 @@ class session {
 	## ##	
 			
 			## Is the user logging out? If so, log them out and redirect to home page
-			function is_logging_out() {
+			static public function is_logging_out() {
 			
-				$component = $__req->component();
+				$component = request::component();
 				$component = !empty($component) ? strtolower($component) : 'home';	
 				$comp      = (bool) ( $component == 'logout' );
 				return $comp;
@@ -141,7 +142,7 @@ class session {
 			
 			
 			## logout the user
-			function logout() {
+			static public function logout() {
 			
 				header("Content-Type: text/html; charset=WINDOWS-1252");
 				header( "Expires: Mon, 26 Jul 1997 05:00:00 GMT" );
@@ -163,7 +164,7 @@ class session {
 					session_destroy();
 				
 				# return the user to the home screen, after logging out
-				header('Location: ' . $config->url->root . '/sign-in');
+				header('Location: ' . url::root() . '/sign-in');
 				exit();
 			}
 	## ##
@@ -183,7 +184,7 @@ class session {
 	##
 	## with each page refresh, renew the session to extend it's timeout
 	## ##	
-		function renew_session() {
+		static public function renew_session() {
 			
 			#
 			# if the user is already logged in, renew their session to keep them logged in
@@ -223,7 +224,7 @@ class session {
 	##
 	## with each page refresh, renew the session to extend it's timeout
 	## ##
-		function rebuild_session_variables() {
+		static public function rebuild_session_variables() {
 				
 				if ( self::is_logged_in() ) :
 					$sql = "SELECT
@@ -280,7 +281,7 @@ class session {
 	
 	
 	
-	function encode_password($pass) {
+	static private function encode_password($pass) {
 		$pass = md5( cPRE_SALT.$pass.cPOST_SALT );
 		return $pass;
 	}
@@ -298,7 +299,7 @@ class session {
 	## if they are valid, log them in
 	##
 	## ##	
-		function try_login() {
+		static public function try_login() {
 			
 			$referer = '';
 			
@@ -345,7 +346,7 @@ class session {
 					$is_locked = ($row->is_locked > 0 && $time_locked <= $lock_interval) ? true : false;
 				
 				if ( (@$is_user && !$is_verified) && !self::is_verifying() ) :
-					if ( __req::component() != 'ajax') :
+					if ( request::component() != 'ajax') :
 						self::verify_account($row);
 					endif;
 					
@@ -363,7 +364,7 @@ class session {
 						return false;
 					endif;
 					
-					self::$login_message = 'location:::' . _STRING_LOGIN_SUCCESS_ . ':::' . __url::root() . '/' . self::$sess->account_type_long . '/dashboard';
+					self::$login_message = 'location:::' . _STRING_LOGIN_SUCCESS_ . ':::' . url::root() . '/' . self::$sess->account_type_long . '/dashboard';
 					
 					if ( $referer == 'enterprise' ) :
 						self::$login_message = 'success:::' . _STRING_LOGIN_SUCCESS_;
@@ -383,7 +384,7 @@ class session {
 							
 							# just logging in
 							default :
-								header('Location: ' . __url::root() . '/' . self::$sess->account_type_long . '/dashboard');
+								header('Location: ' . url::root() . '/' . self::$sess->account_type_long . '/dashboard');
 								exit();
 								break;
 						endswitch;
@@ -410,22 +411,20 @@ class session {
 	## ##
 	
 	
-	function echo_login_message() {
+	static public function echo_login_message() {
 		if ( isset(self::$login_message) && !empty(self::$login_message) ) :
 			echo str_replace('error:::','', self::$login_message);
 		endif;
 	}
 	
 	
-	function is_verifying() {
-		
-		return (bool) ( isset(form::$posts->incl_sign_in) && form::$posts->incl_sign_in == 'verify-account');
-			
+	static public function is_verifying() {		
+		return (bool) ( isset(form::$posts->incl_sign_in) && form::$posts->incl_sign_in == 'verify-account');			
 	}
 	
-	function verify_account( $data ) {
+	static public function verify_account( $data ) {
 		
-		$content      = __req::content();
+		$content      = request::content();
 		$url_has_code = (bool) !empty($content);
 		$db_has_code  = (bool) !empty($data->activation_key);
 		$has_content  = (bool) !empty($content);
@@ -436,21 +435,21 @@ class session {
 			$sql = "UPDATE accounts SET activation_key = '', account_verified = '1', account_status = '1' WHERE id = $data->id";
 			$sql = db::query($sql);
 			db::error();
-			header('Location: ' . __url::root() . '/' . self::$sess->account_type_long . '.php/profile');
+			header('Location: ' . url::root() . '/' . self::$sess->account_type_long . '.php/profile');
 			exit();
 			
 		elseif ( !$url_has_code && $data->account_verified == 0 ) :
 		
 		elseif ( $data->account_verified == 1) :
 			self::set_session_variables($data);
-			header('Location: ' . __url::root() . '/' . self::$sess->account_type_long . '.php/dashboard');
+			header('Location: ' . url::root() . '/' . self::$sess->account_type_long . '.php/dashboard');
 			exit();
 		
 		endif;
 		
 	}
 	
-	function resend_verification_email() {
+	static public function resend_verification_email() {
 		
 		$email    = filter_var(form::$posts->incl_email, FILTER_SANITIZE_EMAIL);
 		
@@ -503,7 +502,7 @@ class session {
 	## Facebook registration is handled in /OAuth/functions.facebook.php
 	##
 	## ##	
-	function create_account() {
+	static public function create_account() {
 		
 		if ( !empty(form::$posts->incl_registration_email) ) :
 				
@@ -562,7 +561,7 @@ class session {
 						else :
 							app::$email->verify_account($row);
 							self::$account_created = true;
-							//header('Location: ' . $__url->root() );
+							//header('Location: ' . url::root() );
 							
 						endif;
 						
@@ -599,7 +598,7 @@ class session {
 	
 	
 	
-	function set_session_variables($row=false) {
+	static private function set_session_variables($row=false) {
 		
 		if ( !$row ) : 
 			self::$login_error = 'you did not pass the user info';

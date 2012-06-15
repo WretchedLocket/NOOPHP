@@ -4,12 +4,12 @@ class cache {
 	
 	private static $fp;
 	
-	function __construct() {
+	public function __construct() {
 		return true;
 	}
 	
 	
-	function start() {
+	static public function start() {
 		
 		if ( @config::$app->cache ) {
 			if ( isset($_SERVER['SCRIPT_URI']) ) {
@@ -17,7 +17,7 @@ class cache {
 			} else {
 				$script_name = basename($_SERVER['SCRIPT_NAME']);
 			}
-			$cachefile = __path::root() . '/templates/cache/'.$script_name;  
+			$cachefile = path::root() . '/templates/cache/'.$script_name;  
 			$cachetime = 120 * 60; // 2 hours  
 	
 			// Serve from the cache if it is younger than $cachetime  
@@ -35,13 +35,14 @@ class cache {
 	}
 	
 	
-	function close() {
+	static public function close() {
 		if ( @config::$app->cache ) {
 			fclose(self::$fp); // close the file  
 			ob_end_flush(); // Send the output to the browser
+			return true;
 		}
+		return false;
 	}
 }
 
-$cache = new cache;
 ?>

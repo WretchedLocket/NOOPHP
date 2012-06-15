@@ -1,6 +1,6 @@
 <?
 
-class __email {
+class email {
 	
 	public function __construct() { return true; }
 	
@@ -57,6 +57,6 @@ class __email {
 	
 }
 
-$__email = new __email();
+$email = new email();
 
 ?>

@@ -54,14 +54,16 @@ class form {
 	private static $input_name;
 	private static $input_value;
 	private static $input_return = false;
-	private static $options      = array();	private static $attributes_not_allowed;
+	private static $options      = array();	
+	private static $attributes_not_allowed;
 	private static $reserved;
-	private static $classes;
 	
+	public static $email_template;
+	public static $value_exclude;
+	public static $classes;
 	public static $has_been_validated = false;
 	public static $variables_created  = false;
 	public static $is_valid = false;
-	
 	public static $required_indicator  = 'incl_';
 	public static $excluded_indicator  = '_ex_';
 	public static $loop_count = 0;
@@ -71,7 +73,7 @@ class form {
 	public static $method;
 	public static $post;
 	public static $database;
-	public static $validation;
+	public static $validate;
 	public static $error = '';
 	public static $values = array();
 	public static $is_checked = false;
@@ -85,27 +87,20 @@ class form {
 		require('api.class.forms.method.post.php');
 		require('api.class.forms.method.validate.php');
 		
-		self::$required_indicator = $this->required_indicator;
-		self::$excluded_indicator = $this->excluded_indicator;
-		self::$reserved           = $this->reserved;
-		self::$attributes_not_allowed = $this->attributes_not_allowed;
-		self::$classes = $this->classes;
-		
 		
 		#
 		# establish the required/excluded indicators as specified by developer
 		self::$reserved['column_type_indicators'] = array(self::$required_indicator, self::$excluded_indicator);
-		array_merge(array(self::$required_indicator, self::$excluded_indicator, self::$reserved['replace_what']));
+		array_merge(array(self::$required_indicator, self::$excluded_indicator, self::$excluded_indicator));
 		array_merge(self::$reserved['replace_with'], array('',''));
 		
 		
 		self::$method     = new Forms_Methods;
 		self::$database   = new Forms_DB;
-		self::$format     = new Forms_Formatting();
+		self::$format     = new Forms_Format;
 		self::$post       = new Forms_Post;
-		self::$validation = new Forms_Validate;
+		self::$validate   = new Forms_Validate;
 	}
-	
 	
 	
 	
@@ -127,8 +122,7 @@ class form {
 	*     // Will output:
 	*     <input type="text" name="field_name" id="field_name" class="myClass" value="some value" />
 	************************************************************************************************** */
-	function input( $name, $options='' ) {
-		global $app;
+	static public function input( $name, $options='' ) {
 		
 		self::$input_return = false;
 		self::$input_name 	= $name;
@@ -168,7 +162,7 @@ class form {
 			*********************************************** */
 			
 				# PASSWORD
-				function password( $name, $options='') {
+				static public function password( $name, $options='') {
 					self::$options			= $options;
 					self::$options			= self::returnValue();
 					self::$options['value'] = '';
@@ -179,7 +173,7 @@ class form {
 				
 				
 				# FILE
-				function _file( $name, $options='') {
+				static public function _file( $name, $options='') {
 					self::$options 		= $options;
 					self::$options			= self::returnValue();
 					self::$options['type'] 	= 'file';					
@@ -188,7 +182,7 @@ class form {
 				
 				
 				# HIDDEN
-				function hidden( $name, $options='') {
+				static public function hidden( $name, $options='') {
 					self::$options 		= $options;
 					self::$options			= self::returnValue();
 					self::$options['type'] 	= 'hidden';					
@@ -197,7 +191,7 @@ class form {
 				
 				
 				# SUBMIT
-				function submit( $name, $options='') {
+				static public function submit( $name, $options='') {
 					self::$options 		= $options;
 					self::$options			= self::returnValue();
 					self::$options['type'] 	= 'submit';
@@ -206,7 +200,7 @@ class form {
 				
 				
 				# RESEST
-				function reset( $name, $options='') {
+				static public function reset( $name, $options='') {
 					self::$options 		= $options;
 					self::$options			= self::returnValue();
 					self::$options['type'] 	='reset';
@@ -215,7 +209,7 @@ class form {
 				
 				
 				# BUTTON
-				function button( $name, $options='' ) {		
+				static public function button( $name, $options='' ) {		
 					self::$options 		= $options;
 					self::$options			= self::returnValue();
 					self::$options['type'] 	='button';
@@ -224,7 +218,7 @@ class form {
 				
 				
 				# IMAGE
-				function image( $name, $options='' ) {
+				static public function image( $name, $options='' ) {
 					self::$options 		= $options;
 					self::$options			= self::returnValue();
 					self::$options['type'] 	='image';
@@ -233,7 +227,7 @@ class form {
 				
 				
 				# FILES
-				function upload( $name, $options='' ) {
+				static public function upload( $name, $options='' ) {
 					self::$options 		= $options;
 					self::$options			= self::returnValue();
 					self::$options['type'] 	='file';
@@ -253,7 +247,7 @@ class form {
 	* START :::
 	* 	See Input directions above
 	**************************************************************************************** */
-	function textarea( $name, $options='' ) {
+	static public function textarea( $name, $options='' ) {
 		
 		self::$input_return = false;
 		self::$options 		= $options;
@@ -300,7 +294,7 @@ class form {
 	*		<select name="field_name" id="field_name" class="input"><option value=""></option><option value="some value" selected>Display Label</option><option value="some value 2" >Display Label 2</option></select>
 	*
 	**************************************************************************************** */
-	function select( $name, $values='', $options='' ) {
+	static public function select( $name, $values='', $options='' ) {
 		global $app;
 		self::$input_return 	= false;
 		self::$input_name 		= $name;
@@ -370,7 +364,7 @@ class form {
 		* 	Used to determine if the value is selected
 		*	in the SELECT element
 		********************************************** */
-		function selectValue($list,$value) {
+		static private function selectValue($list,$value) {
 			if ($value == $list || (is_array($list) && in_array($value,$list)) ) {
 				return true;
 			} else {
@@ -407,7 +401,7 @@ class form {
 			*
 			* Beyond that, it follows the same rules as the SELECT function above
 			********************************************************************** */
-			function state_select($name, $options='') {
+			static public function state_select($name, $options='') {
 				global $db, $config;
 				
 				$option_text = isset($options['short'])?'state':'state_long';
@@ -455,7 +449,7 @@ class form {
 	*		<input type="radio" name="field_name" id="field_name" class="radio" value="some value 2" /><label>Dsiplay Label 2</label><br />
 	*	
 	**************************************************************************************** */
-	function radio( $name, $values="", $options="" ) {
+	static public function radio( $name, $values="", $options="" ) {
 		global $app;
 		self::$input_return = false;
 		self::$input_name  = $name;
@@ -568,7 +562,7 @@ class form {
 	*		<input type="checkbox" name="field_name[]" id="field_name" class="checkbox" value="some value 2" /><label>Dsiplay Label 2</label><br />
 	*	
 	**************************************************************************************** */
-	function checkbox( $name, $values="", $options="" ) {
+	static public function checkbox( $name, $values="", $options="" ) {
 		global $app;
 		self::$input_return 		= false;
 		self::$input_name 			= $name;
@@ -689,7 +683,7 @@ class form {
 	*	Simply outputs a given message with ID 'forms-message'
 	*	redundancy brought this on
 	*********************************************************** */
-	function message($mess, $urgent='') {
+	static public function message($mess, $urgent='') {
 		$urgent = empty($urgent)?'':' class="'.$urgent.'"';
 		if (!empty($mess)) :
 			echo '<p id="forms-message"'.$urgent.'>'.$mess.'</p>';
@@ -712,7 +706,7 @@ class form {
 	********************************************************** */
 		
 		# open tag
-		function start($params='') {
+		static public function start($params='') {
 			
 			self::createVariables();
 			
@@ -737,7 +731,7 @@ class form {
 		}
 		
 		# close tag
-		function close() {
+		static public function close() {
 			echo '</form >';
 		}
 		
@@ -759,7 +753,7 @@ class form {
 	* 	$form->input_name assigned. If neither of those exist, it
 	* 	will use whatever value is password in the $params array
 	*********************************************************** */
-	function cleanUpValue($strip=true) {		
+	static public function cleanUpValue($strip=true) {		
 	
 		self::$options['static'] = isset(self::$options['static']) ? self::$options['static'] : false;
 		
@@ -809,7 +803,7 @@ class form {
 	* 	If there are specific attributes that should be ignored,
 	* 	add them to the $attributes_not_allowed object
 	*********************************************************** */
-	function addOptions($value_exclude=false) {
+	static private function addOptions($value_exclude=false) {
 		$input='';
 		
 		# $options is not an array
@@ -908,7 +902,7 @@ class form {
 	* 	this method takes that value and adds it to the $options
 	* 	object in the $value key
 	*********************************************************** */
-	function returnValue() {
+	static private function returnValue() {
 		
 		if (!is_array(self::$options)) :
 			self::$options = array('value'=>self::$options);
@@ -939,76 +933,76 @@ class form {
 	* START :::
 	* Avoid erroring legacy calls.
 	********************************************************************** */
-	public function echo_error() {
+	static public function echo_error() {
 		return self::$method->echo_error();
 	}
-	public function echo_message() {
+	static public function echo_message() {
 		return self::$method->echo_message();
 	}
 	
-	function hasError() {
+	static public function hasError() {
 		return self::$method->hasError();
 	}
 	
-	function has_error() {
+	static public function has_error() {
 		return self::$method->hasError();
 	}
 	
-	public function hasPost() {
+	static public function hasPost() {
 		return self::$method->has_post();
 	}
 	
-	public function has_post() {
+	static public function has_post() {
 		return self::$method->hasPost();
 	}
 	
-	function validate() {
+	static public function validate() {
 		return self::$method->validate();
 	}
 	
-	function clean($text_to_clean) {
+	static public function clean($text_to_clean) {
 		return self::$method->clean($text_to_clean);
 	}
 	
-	function createVariables() {
+	static public function createVariables() {
 		return self::$method->create_variables();
 	}
 	
-	function create_variables() {
+	static public function create_variables() {
 		return self::$method->create_variables();
 	}
 	
-	function setResults($sql) {
+	static public function setResults($sql) {
 		return self::$method->setResults($sql);
 	}
 	
-	function set_results_from_array($arr) {
+	static public function set_results_from_array($arr) {
 		return self::$method->set_results_from_array($arr);
 	}
 	
-	function strChars( $value ) {
+	static public function strChars( $value ) {
 		return self::$method->strChars( $value );
 	}
 	
-	function self() {
+	static public function self() {
 		return self::$post->self();
 	}
 	
-	function httpReferer($set=false) {
+	static public function httpReferer($set=false) {
 		return self::$post->referer($set=false);
 	}
 	
-	function in2Db($dbName='', $dbtable='', $uniqueKey='') {
+	static public function in2Db($dbName='', $dbtable='', $uniqueKey='') {
 		return self::$database->insert($dbName='', $dbtable='', $uniqueKey='');
 	}
 	
 	
-	function is_valid_email($email='') {
+	static public function is_valid_email($email='') {
 		return self::$validation->is_valid_email($email);
 	}
 	
 	
-	function is_valid_phone($email='') {
+	static public function is_valid_phone($email='') {
 		return self::$validation->is_valid_phone($email);
 	}
 	/* **********************************************************************

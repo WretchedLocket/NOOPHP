@@ -1,6 +1,6 @@
 <?
 
-class __page {
+class page {
 	
 	public static $details = array();
 	
@@ -12,12 +12,12 @@ class __page {
 	}
 	
 	
-	function get_details() {
+	static public function get_details() {
 				
 		$sql = array();
 		
 		if ( db::is_specified() ) :
-			$page = __req::component();
+			$page = request::component();
 			$page = empty($page) ? 'home' : $page;
 			
 			$sql = "SELECT id, page_title, page_description, page_url, session_required FROM pages WHERE page_url = '$page'";
@@ -30,11 +30,11 @@ class __page {
 	}
 	
 	
-	function session_required() {
+	static public function session_required() {
 		return (bool) (self::$details['session_required'] == 'Y' );
 	}
 	
 }
 
-$__page = new __page();
+$page = new page();
 ?>

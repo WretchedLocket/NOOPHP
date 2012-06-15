@@ -2,6 +2,9 @@
 class Forms_Validate {
 	
 	
+	public function __construct() {}
+	
+	
 	
 	/* **************************************************************
 	*
@@ -15,63 +18,61 @@ class Forms_Validate {
 			Returns true if the email address has the email 
 			address format and the domain exists.
 		*/
-		$isValid = true;
+		$is_valid = true;
 		if ( !empty( $email ) ) :
 		
-			$atIndex = strrpos($email, "@");
-			if (is_bool($atIndex) && !$atIndex) {
-				$isValid = false;
+			$at_index = strrpos($email, "@");
+			if (is_bool($at_index) && !$at_index) {
+				$is_valid = false;
 			} else {
-				$domain    = substr($email, $atIndex+1);
-				$local     = substr($email, 0, $atIndex);
+				$domain    = substr($email, $at_index+1);
+				$local     = substr($email, 0, $at_index);
 				$localLen  = strlen($local);
 				$domainLen = strlen($domain);
 				if ($localLen < 1 || $localLen > 64) {
 					// local part length exceeded
-					$isValid = false;
+					$is_valid = false;
 				} else if ($domainLen < 1 || $domainLen > 255) {
 					// domain part length exceeded
-					$isValid = false;
+					$is_valid = false;
 				} else if ($local[0] == '.' || $local[$localLen-1] == '.') {
 					// local part starts or ends with '.'
-					$isValid = false;
+					$is_valid = false;
 				} else if (preg_match('/\\.\\./', $local)) {
 					// local part has two consecutive dots
-					$isValid = false;
+					$is_valid = false;
 				} else if (!preg_match('/^[A-Za-z0-9\\-\\.]+$/', $domain)) {
 					// character not valid in domain part
-					$isValid = false;
+					$is_valid = false;
 				} else if (preg_match('/\\.\\./', $domain)) {
 					// domain part has two consecutive dots
-					$isValid = false;
+					$is_valid = false;
 				} else if (!preg_match('/^(\\\\.|[A-Za-z0-9!#%&`_=\\/$\'*+?^{}|~.-])+$/', str_replace("\\\\","",$local))) {
 					// character not valid in local part unless 
 					// local part is quoted
 					if (!preg_match('/^"(\\\\"|[^"])+"$/', str_replace("\\\\","",$local))) {
-						$isValid = false;
+						$is_valid = false;
 					}
 				}
 				
-				if ($isValid && !(checkdnsrr($domain,"MX") || checkdnsrr($domain,"A"))) {
+				if ($is_valid && !(checkdnsrr($domain,"MX") || checkdnsrr($domain,"A"))) {
 					// domain not found in DNS
-					$isValid = false;
+					$is_valid = false;
 				}
 			}
-			if ( !$isValid ) {
-				$form->error .= "<li>You have entered an invalid email address.</li>";
+			if ( !$is_valid ) {
+				form::$error .= "<li>You have entered an invalid email address.</li>";
 			}
 		
 		endif;
 		
-		return $isValid;
+		return $is_valid;
 
 	}
 	
 	
-	function validate_email($email='') {
-		if ( !self::is_valid_email($email) ) :
-			form::$error .= '<li>You need to enter a valid email address</li>';
-		endif;
+	public function validate_email($email='') {
+		return self::is_valid_email($email);
 	}
 	/* **************************************************************
 	* END
@@ -86,7 +87,7 @@ class Forms_Validate {
 	* Validate the phone number format
 	*
 	*/
-	function is_valid_phone( $phone_number='' ) {
+	public function is_valid_phone( $phone_number='' ) {
 		
 		$pattern = '/^[\(]?(\d{0,3})[\)]?[\s]?[\-]?(\d{3})[\s]?[\-]?(\d{4})[\s]?[x]?(\d*)$/';
 		if (preg_match($pattern, $phone_number, $matches)) {

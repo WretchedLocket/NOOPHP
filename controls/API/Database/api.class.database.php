@@ -1,37 +1,4 @@
 <?php
-/* ************************************************************
-*
-* An application level $config class should be packaged with
-* this. However, if it's not, create the basic error object
-*
-************************************************************ */	
-if ( !isset($config) ) :
-	# ###
-	#
-	$config = (object) array();
-		#
-		# database connection settings
-		$config->db = array(
-			'host'                => '',
-			'user'                => '',
-			'password'            => '',
-			'db_name'             => ''
-		);
-		
-		#
-		# error display settings
-		$config->errors = array(
-			'display'     => true,
-			'redirect_to' => '/error',
-			'email_to'    => 'email@yourdomain.com',
-			'email_from'  => 'email@yourdomain.com',
-			'style_sheet' => 'css/error-reports.css',
-			'suppressed_error_message' => '<div align="center"><b style="font-size: 150%;">an error has occurred and email has been sent the administrator</b></div>'
-		);
-	#	
-endif;
-
-
 /* **********************************************************************
 *	Framework_Database is a class created to manage database functions
 *
@@ -173,6 +140,7 @@ class db {
 	private static $db_link = false;
 	private static $result;
 	private static $error = '';
+	private static $db_selected = false;
 	
 	
 	
@@ -187,23 +155,7 @@ class db {
 	*
 	**************************************************************** */
 	function __construct() { 
-		$this->config = (object) array();
-		
-		# ####
-		#
-		# $config object:
-		# 	To make it easier to change which object is used for 
-		# 	connection and error configuration, we'll set it here
-		# 
-		# Change $config to whatever is used for configuration settings
-		#
-			if ( isset($config) ) {
-			$this->config->errors = config::$errors;
-			$this->config->db     = config::$db;
-			}
-		# END
-		#
-		# ####
+		return true;
 	}
 	/* ****************************************************************
 	* end :::
@@ -219,13 +171,14 @@ class db {
 	* Determines if a DB has been established in the config object
 	* 
 	**************************************************************** */
-	function is_specified() {
+	static public function is_specified() {
 		
 		$has_db_host = (bool) ( isset(config::$db->host) && !empty(config::$db->host) );
 		$has_db_name = (bool) ( isset(config::$db->db_name) && !empty(config::$db->db_name) );
 		$has_db_user = (bool) ( isset(config::$db->user) && !empty(config::$db->user) );
+		$has_db_table = (bool) ( isset(config::$db->config_lookup_table) && !empty( config::$db->config_lookup_table ) );
 		
-		return (bool) ( @$has_db_host && @$has_db_name && @$has_db_user );
+		return (bool) ( @$has_db_host && @$has_db_name && @$has_db_user && @$has_db_table );
 	}
 	/* ****************************************************************
 	* end :::
@@ -244,26 +197,22 @@ class db {
 	* Be sure to set the connection info above
 	*
 	**************************************************************** */
-	function connect() {
+	static public function connect() {
 	
-		if ( !empty(config::$db->db_name) ) {
+		if ( !empty(config::$db->db_name) && !empty( config::$db->config_lookup_table ) ) {
 			
 			#
 			# try the connection
-			self::$db_link = mysql_connect(config::$db->host, config::$db->user, config::$db->password);
+			self::$db_link = mysql_connect(config::$db->host, config::$db->user, config::$db->password) or ('Error connecting to the database: '.debug_backtrace());
 	
-			# The connection failed for some reason
-			if ( !self::$db_link ) {
-				die("Error connecting to the server");
-	
-	
-			# The connection is good so lets get the Application Config Settings
-			# and create the $config object
-			} else {
-				$db_selected = mysql_select_db(config::$db->db_name);
+			# The connection was successful, select the database
+			if ( @self::$db_link ) {
+				self::$db_selected = mysql_select_db(config::$db->db_name);
 			
 			}
 		}
+		
+		return self::$db_selected;
 	}
 	/* ****************************************************************
 	* end :::
@@ -282,7 +231,7 @@ class db {
 	* This allows nested query output
 	* 
 	**************************************************************** */
-	function sqlId() {
+	static private function sqlId() {
 		$id = rand();
 		$uniqueId[] = 'sql' . $id;
 		$uniqueId[] = 'row' . $id;
@@ -307,7 +256,7 @@ class db {
 	*	config::$errors['email_to']
 	* 
 	**************************************************************** */
-	function error() {
+	static public function error() {
 		
 		$display_error    = (bool) ( isset(config::$errors->display) && @config::$errors->display );
 		$has_error        = (bool) ( isset(db::$error) && !empty(self::$error) );
@@ -407,7 +356,7 @@ class db {
 	* Mainly used for the error email, to make it more readable
 	*
 	**************************************************************** */
-	function format_sql( $sql ) {
+	static public function format_sql( $sql ) {
 		
 		$reserved_words = array(
 			"/SELECT/",
@@ -460,7 +409,7 @@ class db {
 	* Run the query
 	* 
 	**************************************************************** */
-	function query( $sql='' ) {
+	static public function query( $sql='' ) {
 		
 		## keep the string value of the SQL statement in case of error
 		self::$sql_txt = $sql;
@@ -505,7 +454,7 @@ class db {
 	* This is used automatically during multi_query()
 	* 
 	**************************************************************** */
-	function mySqliConnect() {
+	static public function mySqliConnect() {
 		self::$mySqli = new mysqli(config::$db->host, config::$db->user, config::$db->password, config::$db->db_name);
 		return self::$mySqli;
 	}
@@ -526,7 +475,7 @@ class db {
 	* using the multi_query() method
 	* 
 	**************************************************************** */
-	function mySqliClose() {
+	static public function mySqliClose() {
 		mysqli_close(self::$mySqli);
 	}
 	/* ****************************************************************
@@ -545,7 +494,7 @@ class db {
 	* Execture the multi-query
 	* 
 	**************************************************************** */
-	function multi_query( $sql='' ) {
+	static public function multi_query( $sql='' ) {
 		
 		## keep the string value of the SQL statement in case of error
 		self::$sql_txt = $sql;
@@ -586,7 +535,7 @@ class db {
 	*	endwhile;
 	* 
 	**************************************************************** */
-	function fetch_object( $sql ) {
+	static public function fetch_object( $sql ) {
 		if ( @self::$result ) :
 			$uniqueIdentifier=rand();
 			if ( self::$connect_type == 'mysql' ) :
@@ -622,7 +571,7 @@ class db {
 	*	endwhile;
 	* 
 	**************************************************************** */
-	function fetch_array( $sql ) {
+	static public function fetch_array( $sql ) {
 		if ( @self::$result ) :
 			$uniqueIdentifier=rand();
 			$$uniqueIdentifier=mysql_fetch_array( $sql );
@@ -646,7 +595,7 @@ class db {
 	* Returns the number of rows returned in a query
 	* 
 	**************************************************************** */
-	function num_rows($result='') {
+	static public function num_rows($result='') {
 		if ( @self::$result ) :
 			$uniqueIdentifier=rand();
 			if (empty($result)) $result = self::$result;
@@ -673,7 +622,7 @@ class db {
 	* Returns the number of rows affected by a query
 	* 
 	**************************************************************** */
-	function rows_affected($result='') {
+	static public function rows_affected($result='') {
 		if ( @self::$result ) :
 			$uniqueIdentifier=rand();
 			if (empty($result)) $result = self::$result;
@@ -706,7 +655,7 @@ class db {
 	* for 'field_name' in the first row
 	* 
 	**************************************************************** */
-	function fetch_row ( $fieldName ) {
+	static public function fetch_row ( $fieldName ) {
 		if (is_numeric( $fieldName )) {
 			$fieldValue=mysql_result( self::$result, $fieldName );
 		} else {
@@ -734,7 +683,7 @@ class db {
 	* row, first field
 	* 
 	**************************************************************** */
-	function fetch_value ( $sql='', $fieldName='', $row='' ) {
+	static public function fetch_value ( $sql='', $fieldName='', $row='' ) {
 		$i=0;
 		$fieldValue = false;
 
@@ -792,7 +741,7 @@ class db {
 	*	endforeach;
 	* 
 	**************************************************************** */
-	function to_array ( $sql='' ) {
+	static public function to_array ( $sql='' ) {
 		
 		## keep the string value of the SQL statement in case of error
 		self::$sql_txt = $sql;
@@ -841,7 +790,7 @@ class db {
 	* method in an include that is loaded after everything else
 	* 
 	**************************************************************** */
-	function close_db() {
+	static public function close_db() {
 		if (self::$db_link) :
 			mysql_close(self::$db_link);
 		endif;
@@ -857,5 +806,5 @@ class db {
 /* *********************************************************************************
 * END :::
 ********************************************************************************* */
-$db = new db;
+$db = new db();
 ?>

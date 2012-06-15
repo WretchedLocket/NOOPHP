@@ -5,15 +5,15 @@
 	<title>WretchedLocket &raquo; <?php app::echo_page_title(); ?></title>
 	<meta name="keywords" content="<?php app::echo_meta_keywords(); ?>" />
 	<meta name="description" content="<?php app::echo_meta_description(); ?>" />
-	<link rel="stylesheet" href="<?= __url::assets(); ?>/css/style.css" id="main-style" type="text/css" />
-	<link rel="stylesheet" href="<?= __url::assets(); ?>/css/forms.css" id="forms-style" type="text/css" />
+	<link rel="stylesheet" href="<?= url::assets(); ?>/css/style.css" id="main-style" type="text/css" />
+	<link rel="stylesheet" href="<?= url::assets(); ?>/css/forms.css" id="forms-style" type="text/css" />
 	<?php app::css(); ?>
 </head>
 <body>
 <div class="content">
 	<?php if ( !app::is_home() ) { ?>
-	<a href="<?php echo __url::root(); ?>">Home</a>
+	<a href="<?php echo url::root(); ?>">Home</a>
 	<?php } ?>
-	<a href="<?php echo __url::root(); ?>/test">Test</a>
-	<a href="<?php echo __url::root(); ?>/test-form">A Form</a>
-	<a href="<?php echo __url::root(); ?>/account">Account (Session Protected)</a>
+	<a href="<?php echo url::root(); ?>/test">Test</a>
+	<a href="<?php echo url::root(); ?>/test-form">A Form</a>
+	<a href="<?php echo url::root(); ?>/account">Account (Session Protected)</a>

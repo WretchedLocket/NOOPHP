@@ -9,6 +9,9 @@
 ?>
 <?php app::header(); ?>
 <?php form::start(); ?>
+	<?php if ( form::has_post() ) {
+			form::$validate->validate_email(form::$posts->incl_email);
+		} ?>
 	<?php form::echo_error(); ?>
 	<p>
 		Name: <br />

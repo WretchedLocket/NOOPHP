@@ -1,5 +1,5 @@
 <?php
-class __url {
+class url {
 	
 	private static $cfg = array();
 	
@@ -9,48 +9,48 @@ class __url {
 	}
 	
 	
-	function absolute() {
+	static public function absolute() {
 		return self::$cfg->absolute;
 	}
 	
 	
-	function login() {
+	static public function login() {
 		return self::$cfg->login;
 	}
 	
 	
-	function assets() {
+	static public function assets() {
 		return self::$cfg->assets;
 	}
 	
 	
-	function controls() {
+	static public function controls() {
 		return self::$cfg->controls;
 	}
 	
 	
-	function modules() {
+	static public function modules() {
 		return self::$cfg->modules;
 	}
 	
 	
-	function root() {
+	static public function root() {
 		return self::$cfg->root;
 	}
 	
 	
-	function views() {
+	static public function views() {
 		return self::$cfg->views;
 	}
 	
 	
-	function component() {
-		$url = self::$cfg->root . '/' . __req::component();
+	static public function component() {
+		$url = self::$cfg->root . '/' . request::component();
 		return $url;
 	}
 	
 	
-	function dashboard() {
+	static public function dashboard() {
 		
 		if ( isset($_SESSION['profile']) ) :
 			$dash = '/account';
@@ -62,12 +62,12 @@ class __url {
 		return $url;
 	}
 	
-	function ajax() {
+	static public function ajax() {
 		
 		$url = self::$cfg->root . '/ajax';
 		return $url;
 	}
 }
 
-$__url = new __url;
+$url = new url;
 ?>

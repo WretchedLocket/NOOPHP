@@ -6,15 +6,15 @@ class component {
 	}
 	
 	function _include() {
-		$content   = __req::content();
-		$component = __req::component();
+		$content   = request::content();
+		$component = request::component();
 		
 		$content = ( empty($content) ) ? 'default' : $content;
-		include_once( __path::views() . '/' . $component . '/' . $content . '.php');
+		include_once( path::views() . '/' . $component . '/' . $content . '.php');
 	}
 	
 	function _path() {
-		return __path::views() . '/'.__req::component();
+		return path::views() . '/'.request::component();
 	}
 	
 }
